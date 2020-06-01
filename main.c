@@ -2,51 +2,53 @@
 #include <stdio.h>
 #include "curve9767.h"
 
-int main(void) {
+void c9767_hash_to_curve(void) {
     curve9767_point Q1;
     shake_context sc1;
     uint8_t mike[4] = "mike";
 
-    // hash_to_curve - 1
     shake_init(&sc1, 256);
     shake_inject(&sc1, mike, 4);
     shake_flip(&sc1);
     curve9767_hash_to_curve(&Q1, &sc1);
+}
 
-    //keygen - 2
-    uint8_t seed2[32];
-    uint8_t tmp2 [64];
-    curve9767_point Q2;
-    curve9767_scalar s2;
+void c9767_keygen(void) {
+    uint8_t seed[32];
+    uint8_t tmp [64];
+    curve9767_point Q;
+    curve9767_scalar s;
     for (size_t i = 0; i < 32; i++) {
-        seed2[i] = i;
+        seed[i] = i;
     }
-    curve9767_keygen(&s2, tmp2, &Q2, seed2, sizeof seed2);
+    curve9767_keygen(&s, tmp, &Q, seed, sizeof seed);
+}
 
-    // ecdh_keygen - 3
-    uint8_t seed3[32];
-    uint8_t tmp3 [32];
-    curve9767_scalar s3;
+void c9767_ecdh_gen_recv(void) {
+    uint8_t seed[32];
+    uint8_t tmp [32];
+    curve9767_scalar s;
     for (size_t i = 0; i < 32; i++) {
-        seed3[i] = i;
+        seed[i] = i;
     }
-    curve9767_ecdh_keygen(&s3, tmp3, seed3, sizeof seed3);
+    curve9767_ecdh_keygen(&s, tmp, seed, sizeof seed);
 
-    //ecdh_recv - 4
-    //XXX, scalar s3 above
+
     uint8_t bk4 [32];
     uint8_t bQ4 [32];
     uint8_t tmp4[32];
     for (size_t i = 0; i < 32; i++) {
         bk4[i] = bQ4[i] =  i;
     }
-    curve9767_ecdh_recv(tmp4, sizeof bk4, &s3, bQ4);
+    curve9767_ecdh_recv(tmp4, sizeof bk4, &s, bQ4);
 
-    //sign_generate - 5
-    //verify and vartime
+}
+
+void c9767_sign_verify(void) {
     sha3_context sc5;
     curve9767_point Q5;
     curve9767_scalar s5;
+    uint8_t mike[4] = "mike";
     uint8_t seed5[32];
     uint8_t hv5  [32];
     uint8_t sig5 [64];
@@ -74,7 +76,14 @@ int main(void) {
 		CURVE9767_OID_SHA3_256, hv5, sizeof hv5);
     r |= curve9767_sign_verify_vartime(sig5, &Q5,
 		CURVE9767_OID_SHA3_256, hv5, sizeof hv5);
-    // r will be 1;
 
+}
+
+int main(void) {
+
+    c9767_hash_to_curve();
+    c9767_keygen();
+    c9767_ecdh_gen_recv();
+    c9767_sign_verify();
     return 0;
 }
